@@ -14,9 +14,15 @@ const main = async () => {
   const client = new MongoClient(uri);
   try {
     const servicesCollection = client.db('awesomeshot').collection('services');
-    app.get('/services', (req, res) => {
+    app.get('/services', async (req, res) => {
+      const size = parseInt(req.query.size);
       const cursor = servicesCollection.find({});
-      const services = cursor.toArray();
+      let services;
+      if (size) {
+        services = await cursor.limit(size).toArray();
+      } else {
+        services = await cursor.toArray();
+      }
       res.send(services);
     });
   } catch (error) {
