@@ -14,6 +14,11 @@ const main = async () => {
   const client = new MongoClient(uri);
   try {
     const servicesCollection = client.db('awesomeshot').collection('services');
+    app.get('/services', (req, res) => {
+      const cursor = servicesCollection.find({});
+      const services = cursor.toArray();
+      res.send(services);
+    });
   } catch (error) {
     console.log(error);
   } finally {
