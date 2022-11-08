@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
+const { MongoClient } = require('mongodb');
 
 const port = process.env.PORT || 5000;
 
@@ -8,9 +9,18 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// -------Database------------
+const main = async () => {
+  const uri = 'mongodb://localhost:27017';
+  const client = new MongoClient(uri);
+  try {
+    const servicesCollection = client.db('awesomeshot').collection('services');
+  } catch (error) {
+    console.log(error);
+  } finally {
+  }
+};
 
-// -------Database------------
+main().catch(console.error);
 
 app.get('/', (req, res) => {
   res.send('Server running!');
