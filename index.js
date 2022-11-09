@@ -1,7 +1,8 @@
+const { MongoClient, ObjectId } = require('mongodb');
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const { MongoClient, ObjectId } = require('mongodb');
+const jwt = require('jsonwebtoken');
 
 const port = process.env.PORT || 5000;
 
@@ -18,12 +19,13 @@ const main = async () => {
   function veryifyJwt(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-      res.status(401).send({ message: 'unauthorized access' });
+      return res.status(401).send({ message: 'unauthorized access' });
     }
     const token = authHeader.split(' ')[1];
+
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
       if (err) {
-        res.status(403).send({ message: 'unauthorized access' });
+        return res.status(403).send({ message: 'unauthorized access' });
       }
       req.decoded = decoded;
       next();
@@ -32,6 +34,7 @@ const main = async () => {
 
   try {
     const servicesCollection = client.db('awesomeshot').collection('services');
+    const reviewsCollection = client.db('awesomeshot').collection('reviews');
     app.get('/services', async (req, res) => {
       const size = parseInt(req.query.size);
       const cursor = servicesCollection.find({});
@@ -48,6 +51,18 @@ const main = async () => {
       const id = req.params.id;
       const service = await servicesCollection.findOne({ _id: ObjectId(id) });
       res.send(service);
+    });
+
+    app.get('/reviews/:id', async (req, res) => {
+      const cursor = reviewsCollection.find({ serviceId: req.params.id });
+      const reviews = await cursor.sort({ _id: -1 }).toArray();
+      res.send(reviews);
+    });
+
+    app.post('/reviews', veryifyJwt, async (req, res) => {
+      const review = req.body;
+      const result = await reviewsCollection.insertOne(review);
+      res.status(201).send(result);
     });
 
     app.post('/jwt', (req, res) => {
