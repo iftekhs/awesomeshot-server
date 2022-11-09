@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const app = express();
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 
 const port = process.env.PORT || 5000;
 
@@ -24,6 +24,12 @@ const main = async () => {
         services = await cursor.toArray();
       }
       res.send(services);
+    });
+
+    app.get('/services/:id', async (req, res) => {
+      const id = req.params.id;
+      const service = await servicesCollection.findOne({ _id: ObjectId(id) });
+      res.send(service);
     });
   } catch (error) {
     console.log(error);
