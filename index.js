@@ -35,6 +35,7 @@ const main = async () => {
   try {
     const servicesCollection = client.db('awesomeshot').collection('services');
     const reviewsCollection = client.db('awesomeshot').collection('reviews');
+
     app.get('/services', async (req, res) => {
       const size = parseInt(req.query.size);
       const cursor = servicesCollection.find({});
@@ -56,6 +57,23 @@ const main = async () => {
     app.get('/reviews/:id', async (req, res) => {
       const cursor = reviewsCollection.find({ serviceId: req.params.id });
       const reviews = await cursor.sort({ _id: -1 }).toArray();
+      res.send(reviews);
+    });
+
+    app.get('/reviews', veryifyJwt, async (req, res) => {
+      const decoded = req.decoded;
+      let query = {};
+
+      if (decoded.email !== req.query.email) {
+        return res.status(403).send({ message: 'unauthorized access' });
+      }
+
+      query = {
+        email: decoded.email,
+      };
+
+      const cursor = reviewsCollection.find(query);
+      const reviews = await cursor.toArray();
       res.send(reviews);
     });
 
