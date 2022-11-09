@@ -83,6 +83,21 @@ const main = async () => {
       res.status(201).send(result);
     });
 
+    app.delete('/reviews/:id', veryifyJwt, async (req, res) => {
+      const decoded = req.decoded;
+      const id = req.params.id;
+
+      const query = { _id: ObjectId(id) };
+      const review = reviewsCollection.findOne(query);
+
+      if (decoded.email !== review.email) {
+        res.status(403).send({ message: 'unauthorized access' });
+      }
+
+      const result = await reviewsCollection.deleteOne(query);
+      res.send(result);
+    });
+
     app.post('/jwt', (req, res) => {
       const user = req.body;
       const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
