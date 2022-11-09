@@ -36,6 +36,8 @@ const main = async () => {
     const servicesCollection = client.db('awesomeshot').collection('services');
     const reviewsCollection = client.db('awesomeshot').collection('reviews');
 
+    // Services
+
     app.get('/services', async (req, res) => {
       const size = parseInt(req.query.size);
       const cursor = servicesCollection.find({});
@@ -48,11 +50,19 @@ const main = async () => {
       res.send(services);
     });
 
+    app.post('/services', veryifyJwt, async (req, res) => {
+      const service = req.body;
+      const result = await servicesCollection.insertOne(service);
+      res.status(201).send(result);
+    });
+
     app.get('/services/:id', async (req, res) => {
       const id = req.params.id;
       const service = await servicesCollection.findOne({ _id: ObjectId(id) });
       res.send(service);
     });
+
+    // Reviews
 
     app.get('/reviews/:id', async (req, res) => {
       const cursor = reviewsCollection.find({ serviceId: req.params.id });
@@ -88,19 +98,21 @@ const main = async () => {
       const id = req.params.id;
 
       const query = { _id: ObjectId(id) };
-      const review = reviewsCollection.findOne(query);
+      const review = await reviewsCollection.findOne(query);
 
       if (decoded.email !== review.email) {
-        res.status(403).send({ message: 'unauthorized access' });
+        return res.status(403).send({ message: 'unauthorized access' });
       }
 
       const result = await reviewsCollection.deleteOne(query);
       res.send(result);
     });
 
+    // Auth
+
     app.post('/jwt', (req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' });
       res.send({ token });
     });
   } catch (error) {
