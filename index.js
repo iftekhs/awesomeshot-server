@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 const main = async () => {
-  const uri = 'mongodb://localhost:27017';
+  const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.g2un3jn.mongodb.net/?retryWrites=true&w=majority`;
   const client = new MongoClient(uri);
 
   function veryifyJwt(req, res, next) {
@@ -64,9 +64,15 @@ const main = async () => {
 
     // Reviews
 
+    app.get('/review/:id', async (req, res) => {
+      const id = req.params.id;
+      const review = await reviewsCollection.findOne({ _id: ObjectId(id) });
+      res.send(review);
+    });
+
     app.get('/reviews/:id', async (req, res) => {
       const cursor = reviewsCollection.find({ serviceId: req.params.id });
-      const reviews = await cursor.sort({ _id: -1 }).toArray();
+      const reviews = await cursor.sort({ createdAt: -1 }).toArray();
       res.send(reviews);
     });
 
@@ -93,17 +99,23 @@ const main = async () => {
       res.status(201).send(result);
     });
 
-    app.delete('/reviews/:id', veryifyJwt, async (req, res) => {
-      const decoded = req.decoded;
+    app.patch('/reviews/:id', veryifyJwt, async (req, res) => {
       const id = req.params.id;
-
       const query = { _id: ObjectId(id) };
-      const review = await reviewsCollection.findOne(query);
+      const review = req.body;
+      const updatedDoc = {
+        $set: {
+          text: review.text,
+          rating: review.rating,
+        },
+      };
+      const result = await reviewsCollection.updateOne(query, updatedDoc);
+      res.send(result);
+    });
 
-      if (decoded.email !== review.email) {
-        return res.status(403).send({ message: 'unauthorized access' });
-      }
-
+    app.delete('/reviews/:id', veryifyJwt, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
       const result = await reviewsCollection.deleteOne(query);
       res.send(result);
     });
