@@ -95,7 +95,17 @@ const main = async () => {
 
     app.post('/reviews', veryifyJwt, async (req, res) => {
       const review = req.body;
-      const result = await reviewsCollection.insertOne(review);
+      const reviewObject = {
+        name: review.name,
+        serviceId: review.serviceId,
+        serviceName: review.serviceName,
+        email: review.email,
+        userPhoto: review.userPhoto,
+        text: review.text,
+        rating: review.rating,
+        createdAt: new Date(Date.now()),
+      };
+      const result = await reviewsCollection.insertOne(reviewObject);
       res.status(201).send(result);
     });
 
